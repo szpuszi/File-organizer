@@ -50,16 +50,15 @@ class FileOrganizer(QMainWindow):
             }
         """)
 
-        # Extension mappings
         self.extension_mapping = {
-            'DOKUMENTY': ['.pdf', '.doc', '.docx', '.txt', '.rtf', '.odt'],
-            'OBRAZY': ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp'],
+            'DOCUMENTS': ['.pdf', '.doc', '.docx', '.txt', '.rtf', '.odt'],
+            'IMAGES': ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp'],
             'AUDIO': ['.mp3', '.wav', '.flac', '.m4a', '.aac'],
-            'WIDEO': ['.mp4', '.avi', '.mkv', '.mov', '.wmv'],
-            'ARCHIWA': ['.zip', '.rar', '.7z', '.tar', '.gz'],
+            'VIDEO': ['.mp4', '.avi', '.mkv', '.mov', '.wmv'],
+            'ARCHIVES': ['.zip', '.rar', '.7z', '.tar', '.gz'],
             'EXE': ['.exe', '.msi'],
-            'PROGRAMOWANIE': ['.py', '.java', '.cpp', '.c', '.html', '.css', '.js'],
-            'INNE': []
+            'PROGRAMMING': ['.py', '.java', '.cpp', '.c', '.html', '.css', '.js'],
+            'OTHER': []
         }
 
         self.setup_ui()
@@ -71,23 +70,21 @@ class FileOrganizer(QMainWindow):
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.setSpacing(15)
 
-        # Title
         title_label = QLabel("File Organizer")
         title_label.setFont(QFont("Arial", 20, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(title_label)
 
-        # Directory selection frame
         dir_frame = ModernFrame()
         dir_layout = QVBoxLayout(dir_frame)
         
-        dir_label = QLabel("Wybierz folder do posortowania:")
+        dir_label = QLabel("Select folder to sort:")
         dir_label.setFont(QFont("Arial", 10))
         dir_layout.addWidget(dir_label)
 
         dir_input_layout = QHBoxLayout()
         self.dir_entry = QLineEdit()
-        self.browse_btn = QPushButton("Przeglądaj")
+        self.browse_btn = QPushButton("Browse")
         self.browse_btn.clicked.connect(self.browse_directory)
         
         dir_input_layout.addWidget(self.dir_entry)
@@ -96,13 +93,11 @@ class FileOrganizer(QMainWindow):
         
         main_layout.addWidget(dir_frame)
 
-        # Organize button
-        self.organize_btn = QPushButton("Sortuj pliki")
+        self.organize_btn = QPushButton("Sort Files")
         self.organize_btn.setFixedHeight(40)
         self.organize_btn.clicked.connect(self.organize_files)
         main_layout.addWidget(self.organize_btn)
 
-        # Status frame
         status_frame = ModernFrame()
         status_layout = QVBoxLayout(status_frame)
         
@@ -117,7 +112,7 @@ class FileOrganizer(QMainWindow):
         main_layout.addWidget(status_frame)
 
     def browse_directory(self):
-        directory = QFileDialog.getExistingDirectory(self, "Wybierz folder")
+        directory = QFileDialog.getExistingDirectory(self, "Select folder")
         if directory:
             self.dir_entry.setText(directory)
 
@@ -133,21 +128,19 @@ class FileOrganizer(QMainWindow):
     def organize_files(self):
         directory = self.dir_entry.text()
         if not directory:
-            QMessageBox.critical(self, "Błąd", "Proszę wybrać folder do posortowania!")
+            QMessageBox.critical(self, "Error", "Please select a folder to sort!")
             return
             
         self.status_text.clear()
-        self.add_status("Rozpoczynam sortowanie plików...")
+        self.add_status("Starting file sorting...")
         
         try:
-            # Create category folders
             for category in self.extension_mapping.keys():
                 category_path = os.path.join(directory, category)
                 if not os.path.exists(category_path):
                     os.makedirs(category_path)
-                    self.add_status(f"Utworzono folder: {category}")
+                    self.add_status(f"Created folder: {category}")
             
-            # Get and sort files
             all_files = self.get_all_files(directory)
             files_moved = 0
             
@@ -156,7 +149,7 @@ class FileOrganizer(QMainWindow):
                 _, extension = os.path.splitext(filename)
                 extension = extension.lower()
                 
-                target_category = 'INNE'
+                target_category = 'OTHER'
                 for category, extensions in self.extension_mapping.items():
                     if extension in extensions:
                         target_category = category
@@ -164,7 +157,6 @@ class FileOrganizer(QMainWindow):
                 
                 target_path = os.path.join(directory, target_category, filename)
                 
-                # Handle duplicates
                 if os.path.exists(target_path):
                     base, ext = os.path.splitext(filename)
                     counter = 1
@@ -175,22 +167,21 @@ class FileOrganizer(QMainWindow):
                 
                 shutil.move(file_path, target_path)
                 files_moved += 1
-                self.add_status(f"Przeniesiono: {filename} -> {target_category}")
+                self.add_status(f"Moved: {filename} -> {target_category}")
             
-            # Clean up empty folders
             for root, dirs, files in os.walk(directory, topdown=False):
                 for dir_name in dirs:
                     dir_path = os.path.join(root, dir_name)
                     if not os.listdir(dir_path) and dir_name not in self.extension_mapping:
                         os.rmdir(dir_path)
-                        self.add_status(f"Usunięto pusty folder: {dir_path}")
+                        self.add_status(f"Removed empty folder: {dir_path}")
             
-            self.add_status(f"\nZakończono! Posortowano {files_moved} plików.")
-            QMessageBox.information(self, "Sukces", f"Posortowano {files_moved} plików!")
+            self.add_status(f"\nCompleted! Sorted {files_moved} files.")
+            QMessageBox.information(self, "Success", f"Sorted {files_moved} files!")
             
         except Exception as e:
-            self.add_status(f"\nBŁĄD: {str(e)}")
-            QMessageBox.critical(self, "Błąd", f"Wystąpił błąd podczas sortowania: {str(e)}")
+            self.add_status(f"\nERROR: {str(e)}")
+            QMessageBox.critical(self, "Error", f"An error occurred while sorting: {str(e)}")
 
     def add_status(self, message):
         self.status_text.append(message)
@@ -203,4 +194,4 @@ if __name__ == "__main__":
     app = QApplication([])
     window = FileOrganizer()
     window.show()
-    app.exec() 
+    app.exec()
